@@ -1,7 +1,6 @@
 package my_tetris.view;
 
 import my_tetris.Direction;
-import my_tetris.Element;
 import my_tetris.Game;
 import my_tetris.events.GameEvent;
 import my_tetris.events.GameListener;
@@ -19,11 +18,9 @@ public class GamePanel extends JFrame{
 
     private final int NEXT_SHAPE_SPACE_WIDTH = 4;
 
-    private final int CELL_SIZE = 20;
+    private GlassField glassField = null;
 
-    private final Color EMPTY_CELL_COLOR = new Color(245, 245, 245);
-
-    private final Color CELL_BORDER_COLOR = new Color(131, 139, 131);
+    private NextShapeSpace nextShapeSpace = null;
 
     private Game game = null;
 
@@ -34,212 +31,78 @@ public class GamePanel extends JFrame{
 
         game = new Game();
         game.addGameListener(new GameObserver());
-
+        glassField = new GlassField(GLASS_HEIGHT, GLASS_WIDTH);
+        nextShapeSpace = new NextShapeSpace(NEXT_SHAPE_SPACE_HEIGHT, NEXT_SHAPE_SPACE_WIDTH);
         initComponents();
-        createGlassSpace();
-        createNextShapeSpace();
-        pack();
-        setResizable(false);
+    }
+
+    private void initComponents() {
+
+        setTitle("Test_GUI");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
         addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 glassPanelKeyPressed(evt);
             }
         });
-        setFocusable(true);
-    }
 
-    private void createGlassSpace(){
+        content = (JPanel) this.getContentPane();
+        content.setPreferredSize(new Dimension(360,400));
+        setResizable(false);
 
-        glassPanel.setDoubleBuffered(true);
-        glassPanel.setLayout(new GridLayout(GLASS_HEIGHT, GLASS_WIDTH));
+        content.add(glassField, BorderLayout.WEST);
 
-        Dimension fieldDimension = new Dimension((CELL_SIZE) * GLASS_WIDTH, (CELL_SIZE) * GLASS_HEIGHT);
+        leftSidePanel = new JPanel();
+        leftSidePanel.setPreferredSize(new Dimension(150, 380));
+        leftSidePanel.setLayout(new FlowLayout());
 
-        glassPanel.setPreferredSize(fieldDimension);
-        glassPanel.setMinimumSize(fieldDimension);
-        glassPanel.setMaximumSize(fieldDimension);
+        scoreLabel = new JLabel("Счет");
+        scoreLabel.setPreferredSize(new Dimension(120, 25));
+        leftSidePanel.add(scoreLabel);
 
-        glassPanel.removeAll();
+        scoreField = new JTextField();
+        scoreField.setEditable(false);
+        scoreField.setFocusable(false);
+        scoreField.setPreferredSize(new Dimension(130, 25));
+        leftSidePanel.add(scoreField);
 
-        for (int row = 1; row <= GLASS_HEIGHT; row++)
-        {
-            for (int col = 1; col <= GLASS_WIDTH; col++)
-            {
-                JButton button = new JButton("");
-                button.setFocusable(false);
-                button.setEnabled(false);
-                button.setBorder(BorderFactory.createLineBorder(CELL_BORDER_COLOR));
-                glassPanel.add(button);
+        var emptyPanel = new JPanel();
+        emptyPanel.setPreferredSize(new Dimension(150, 120));
+        leftSidePanel.add(emptyPanel);
 
-            }
-        }
-        glassPanel.validate();
-    }
+        nextShapeLabel = new JLabel("    Следующая фигура");
+        nextShapeLabel.setPreferredSize(new Dimension(150, 25));
+        leftSidePanel.add(nextShapeLabel);
 
-    private void createNextShapeSpace() {
+        leftSidePanel.add(nextShapeSpace);
 
-        nextShapePanel.setDoubleBuffered(true);
-        nextShapePanel.setLayout(new GridLayout(NEXT_SHAPE_SPACE_HEIGHT, NEXT_SHAPE_SPACE_WIDTH));
+        emptyPanel = new JPanel();
+        emptyPanel.setPreferredSize(new Dimension(150, 90));
+        leftSidePanel.add(emptyPanel);
 
-        Dimension fieldDimension = new Dimension((CELL_SIZE-1) * NEXT_SHAPE_SPACE_WIDTH,
-                (CELL_SIZE-1) * NEXT_SHAPE_SPACE_HEIGHT);
-
-        nextShapePanel.setPreferredSize(fieldDimension);
-        nextShapePanel.setMinimumSize(fieldDimension);
-        nextShapePanel.setMaximumSize(fieldDimension);
-
-        nextShapePanel.removeAll();
-
-        for (int row = 1; row <= NEXT_SHAPE_SPACE_HEIGHT; row++)
-        {
-            for (int col = 1; col <= NEXT_SHAPE_SPACE_WIDTH; col++)
-            {
-                JButton button = new JButton("");
-                button.setFocusable(false);
-                button.setEnabled(false);
-                button.setPreferredSize(new Dimension(CELL_SIZE, CELL_SIZE));
-                button.setBorder(BorderFactory.createLineBorder(CELL_BORDER_COLOR));
-                nextShapePanel.add(button);
-
-            }
-        }
-        nextShapePanel.validate();
-    }
-
-    private JButton getButton(JPanel panel, Point pos, int panelWidth) {
-
-        int index = 0;
-        Component widgets[] = panel.getComponents();
-        for(int i = widgets.length - 1; i >= 0; --i)
-        {
-            if(widgets[i] instanceof JButton)
-            {
-                if(index == panelWidth * (pos.y) + panelWidth - 1 - pos.x)
-                {
-                    return (JButton)widgets[i];
-                }
-                index++;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">
-    private void initComponents() {
-
-        jLabel1 = new javax.swing.JLabel();
-        bStart = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        glassPanel = new javax.swing.JPanel();
-        nextShapePanel = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
-        scoreField = new javax.swing.JTextField();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Tetris");
-
-        bStart.setText("Начать игру");
-        bStart.addActionListener(new java.awt.event.ActionListener() {
+        startGameButton = new JButton("Начать игру");
+        startGameButton.setPreferredSize(new Dimension(120, 25));
+        startGameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bStartActionPerformed(evt);
             }
         });
+        leftSidePanel.add(startGameButton);
 
-        jLabel2.setText("Ваш счет:");
-
-        glassPanel.setBackground(new java.awt.Color(255, 255, 255));
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(glassPanel);
-        glassPanel.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-                jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGap(0, 244, Short.MAX_VALUE)
-        );
-        jPanel2Layout.setVerticalGroup(
-                jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGap(0, 365, Short.MAX_VALUE)
-        );
-
-        nextShapePanel.setBackground(new java.awt.Color(255, 255, 255));
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(nextShapePanel);
-        nextShapePanel.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-                jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGap(0, 156, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-                jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGap(0, 48, Short.MAX_VALUE)
-        );
-
-        jLabel3.setText("Следующая фигура");
-
-        scoreField.setEditable(false);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(glassPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addGap(10, 10, 10)
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addComponent(nextShapePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(jLabel3)
-                                                        .addComponent(scoreField, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(bStart)))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(glassPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addGroup(layout.createSequentialGroup()
-                                                                .addGap(20, 20, 20)
-                                                                .addComponent(jLabel1))
-                                                        .addComponent(jLabel2))
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(scoreField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(80, 80, 80)
-                                                .addComponent(jLabel3)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(nextShapePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addComponent(bStart)))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
+        content.add(leftSidePanel, BorderLayout.EAST);
         pack();
-    }// </editor-fold>
+        setVisible(true);
+        setFocusable(true);
+    }
 
-    // Variables declaration - do not modify
-    private javax.swing.JButton bStart;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JPanel glassPanel;
-    private javax.swing.JPanel nextShapePanel;
+    private JPanel content;
+    private JPanel leftSidePanel;
+    private javax.swing.JButton startGameButton;
+    private javax.swing.JLabel scoreLabel;
+    private javax.swing.JLabel nextShapeLabel;
     private javax.swing.JTextField scoreField;
-    // End of variables declaration
+
     //Слушает нажатие кнопок и по ним сообщает игре, как нужно переместить/повернуть фигуру
     private void glassPanelKeyPressed(java.awt.event.KeyEvent evt) {
 
@@ -259,7 +122,7 @@ public class GamePanel extends JFrame{
 
     private void bStartActionPerformed(java.awt.event.ActionEvent evt) {
 
-        bStart.setEnabled(false);
+        startGameButton.setEnabled(false);
         game.start();
     }
 
@@ -270,7 +133,7 @@ public class GamePanel extends JFrame{
         @Override
         public void gameFinished() {
 
-            bStart.setEnabled(true);
+            startGameButton.setEnabled(true);
             String str = "Игра закончилась.\nВаш счет: " + game.getScore();
             JOptionPane.showMessageDialog(null, str, "Конец игры", JOptionPane.INFORMATION_MESSAGE);
         }
@@ -281,34 +144,10 @@ public class GamePanel extends JFrame{
         }
 
         @Override
-        public void glassContentChanged(GameEvent e) {
+        public void glassContentChanged(GameEvent e) { glassField.update(e.getGlassElements());}
 
-            for (Component widget : glassPanel.getComponents()) {
-
-                if (widget instanceof JButton && widget.getBackground() != EMPTY_CELL_COLOR) {
-                    widget.setBackground(EMPTY_CELL_COLOR);
-                }
-            }
-
-            for (Component widget : nextShapePanel.getComponents()) {
-
-                if (widget instanceof JButton && widget.getBackground() != EMPTY_CELL_COLOR) {
-                    widget.setBackground(EMPTY_CELL_COLOR);
-                }
-            }
-
-            for (Element tmp : e.getGlassElements()) {
-
-                getButton(glassPanel, new Point(tmp.getCol(), tmp.getRow()),
-                        GLASS_WIDTH).setBackground(tmp.getColor());
-            }
-
-            for (Element tmp : e.getNextActiveShape()) {
-
-                getButton(nextShapePanel, new Point(tmp.getCol(), tmp.getRow()),
-                        NEXT_SHAPE_SPACE_WIDTH).setBackground(tmp.getColor());
-            }
-        }
+        @Override
+        public void nextShapeChanged(GameEvent e) { nextShapeSpace.update(e.getNextActiveShape()); }
     }
 
 }

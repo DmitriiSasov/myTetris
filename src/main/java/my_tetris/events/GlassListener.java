@@ -10,7 +10,7 @@ package my_tetris.events;
  * @author bopoh
  */
 public interface GlassListener {
-
+    
     public void glassFilled();
 
     public void glassContentChanged(GlassEvent e);

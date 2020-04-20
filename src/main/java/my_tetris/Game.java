@@ -16,11 +16,11 @@ import java.util.ArrayList;
  * @author bopoh
  */
 public class Game {
-
+    
     private Glass glass;
-
+    
     private ShapeFactory shapeFactory;
-
+    
     private int score;
 
     public boolean isInProgress () {
@@ -29,26 +29,27 @@ public class Game {
     }
 
     public void start() {
-
+        
         glass = new Glass(10, 20);
-
+        
         glass.addGlassListener(new GlassObserver());
         glass.addHorizontalRowListener(new HorizontalRowObserver());
-
+        
         score = 0;
-
+        
         shapeFactory = new ShapeFactory();
+        shapeFactory.addShapeFactoryListener(new ShapeFactoryObserver());
 
         glass.setShapeFactory(shapeFactory);
     }
-
+    
     private void changeScore(int delta) {
-
+        
         score += delta;
     }
-
+    
     public void ShowScore() {
-
+        
         System.out.print("\n***\nИгра закончилась\nВаш счет: " + score +  "\n***");
     }
 
@@ -109,13 +110,31 @@ public class Game {
 
     }
 
+    //Получает следующую фигуру
+    private class ShapeFactoryObserver implements ShapeFactoryListener {
+
+        @Override
+        public void nextShapeChanged(GameEvent e) {
+
+            GameEvent event = new GameEvent(this);
+            Shape nextActiveShape = glass.getShapeFactory().getNextShape();
+            ArrayList<Element> NextActiveShapeElements = new ArrayList<>();
+            for (int i = 0; i < nextActiveShape.elementsCount(); i++) {
+
+                NextActiveShapeElements.add(nextActiveShape.getElement(i));
+            }
+            event.setNextActiveShape(NextActiveShapeElements);
+            fireNextShapeChanged(event);
+        }
+
+    }
 
     //Получает очки от очищенного ряда
     private class HorizontalRowObserver implements HorizontalRowListener {
 
         @Override
         public void HorizontalRowCleared(HorizontalRowEvent e) {
-
+            
             changeScore(e.getScore());
             fireScoreChanged();
         }
@@ -162,4 +181,11 @@ public class Game {
         }
     }
 
+    private void fireNextShapeChanged(GameEvent e) {
+
+        for (GameListener l: listeners) {
+
+            l.nextShapeChanged(e);
+        }
+    }
 }

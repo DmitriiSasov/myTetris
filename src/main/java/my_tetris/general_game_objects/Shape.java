@@ -33,28 +33,28 @@ public class Shape implements Cloneable{
     private Timer timer = new Timer(1000, new MovingShapeTask());
 
     public Shape(ArrayList<Element> elements) {
-
+        
         if (elements.size() > 0) {
 
             for (Element tmp : elements) {
-
+                
                 try {
-
+                    
                     this.elements.add(tmp.clone());
-
+                    
                 } catch (CloneNotSupportedException ex) {
-
+                    
                     Logger.getLogger(Shape.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             timer.setRepeats(true);
 
         } else {
-
+            
             throw new ShapeSizeException("В фигуре должно быть не меньше 1 элемента");
-        }
+        }        
     }
-
+        
     void setGlass(Glass glass) {
 
         if (this.glass != null) {
@@ -66,15 +66,15 @@ public class Shape implements Cloneable{
         this.glass.addHorizontalRowListener(rowObserver);
 
         if (glass.getActiveShape() != this) {
-
+            
             glass.setActiveShape(this);
         }
     }
-
+    
     Glass getGlass(){
         return glass;
     }
-
+    
     void unsetGlass(){
 
         var glass = this.glass;
@@ -86,9 +86,9 @@ public class Shape implements Cloneable{
             glass.unsetActiveShape();
         }
     }
-
+    
     public Element getElement(int index) {
-
+        
         if (index < elements.size() && index >= 0){
 
             try {
@@ -102,66 +102,66 @@ public class Shape implements Cloneable{
         }
         return null;
     }
-
+    
     Element takeElement(int index) {
-
+        
         if (index < elements.size() && index >= 0){
-
+            
             Element tmp = elements.get(index);
             elements.remove(index);
             return tmp;
-
+            
         } else {
             return null;
         }
     }
-
+    
     public void rotate() {
-
+        
         ArrayList<Element> rotatedElements = new ArrayList<>();
-
+        
         for (Element tmp : elements) {
-
+            
             try {
-
+            
                 rotatedElements.add(tmp.clone());
-
+            
             } catch (CloneNotSupportedException ex) {
-
+                
                 Logger.getLogger(Shape.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
+        
         rotateElements(rotatedElements);
 
         if (isCorrectPosition(rotatedElements)) {
-
+            
             System.err.println("Фигура повернулась");//Для вывода на экран
             elements.clear();
             elements.addAll(rotatedElements);
         }
-
+        
         glass.updateGlassContent();//Для вывода на экран
     }
-
+    
     private void rotateElements(ArrayList<Element> elements) {
-
+        
         Element rotateCenter = elements.get(1);
         for (Element tmp : elements) {
-
+            
             int col = tmp.getRow() - rotateCenter.getRow();
             int row = tmp.getCol() - rotateCenter.getCol();
             tmp.setPosition(rotateCenter.getCol() + col, rotateCenter.getRow() - row);
         }
     }
-
-    void setStartPosition(int minRowIndex, int maxRowIndex, int minColIndex,
-                          int maxColIndex) {
-
+    
+    void setStartPosition(int minRowIndex, int maxRowIndex, int minColIndex, 
+            int maxColIndex) {
+        
         if (maxRowIndex - minRowIndex > 5 && maxColIndex - minColIndex > 5) {
-
+            
             for (Element tmp : elements) {
-
+                
                 tmp.setPosition(tmp.getCol() + (maxColIndex - minColIndex) / 2 - 1,
                         tmp.getRow() + maxRowIndex);
             }
@@ -172,10 +172,10 @@ public class Shape implements Cloneable{
             glass.updateGlassContent();//Для вывода на экран
 
         } else {
-
+            
             throw new ShapeStartPositionException("Границы стакана заданы неверно");
         }
-
+        
     }
 
     public boolean hasElements() {
@@ -184,88 +184,88 @@ public class Shape implements Cloneable{
     }
 
     public int elementsCount() {
-
+        
         return elements.size();
     }
-
+    
     synchronized public void move(Direction d) {
-
+        
         int X_Shift = 0;
         int Y_Shift = 0;
-
+        
         String dir = ""; //Для вывода на экран
-
+        
         if (d == Direction.WEST) {
-
+            
             X_Shift--;
             dir = "запад";//Для вывода на экран
         } else if (d == Direction.EAST) {
-
+            
             X_Shift++;
             dir = "восток";//Для вывода на экран
         } else if (d == Direction.NORTH) {
-
+            
             Y_Shift++;
             dir = "север";//Для вывода на экран
         } else {
-
+            
             Y_Shift--;
             dir = "юг";//Для вывода на экран
         }
-
+        
         ArrayList<Element> movedElements = new ArrayList<>();
-
+        
         for (Element tmp : elements) {
-
+            
             try {
-
+            
                 movedElements.add(tmp.clone());
-
+            
             } catch (CloneNotSupportedException ex) {
                 Logger.getLogger(Shape.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
+        
         moveElements(movedElements, X_Shift, Y_Shift);
-
+        
         boolean canMove = isCorrectPosition(movedElements);
-
+        
         if (canMove) {
-
+            
             elements.clear();
             elements.addAll(movedElements);
             System.err.println("Фигура передвинулась на 1 клетку на " + dir);//Для вывода на экран
             glass.updateGlassContent();//Для вывода на экран
         }
-
+        
         if (d == Direction.SOUTH && !canMove) {
 
             System.err.println("Фигура остановилась");//Для вывода на экран
             timer.stop();
             glass.absorbActiveShape();
         }
-
+        
 
     }
-
+    
     private void moveElements(ArrayList<Element> elements, int X_Shift, int Y_Shift) {
-
+        
         for (Element tmp: elements) {
-
+           
             tmp.setPosition(tmp.getCol() + X_Shift, tmp.getRow() + Y_Shift);
         }
-
+        
     }
-
+    
     private boolean isCorrectPosition(ArrayList<Element> elements) {
-
+        
         boolean correctPosition = true;
         for (int i = 0 ; i < elements.size() && correctPosition; ++i) {
-
-            correctPosition = correctPosition && glass.isFreePosition(new Point(elements.get(i).getCol(),
+            
+            correctPosition = correctPosition && glass.isFreePosition(new Point(elements.get(i).getCol(), 
                     elements.get(i).getRow()));
         }
-
+        
         return correctPosition;
     }
 
@@ -318,11 +318,11 @@ public class Shape implements Cloneable{
 
         @Override
         public void HorizontalRowCleared(HorizontalRowEvent e) {
-
+            
             if (elementsCount() != 0 && e.getScore() == 0) {
 
                 System.out.println("Фигура падает из-за очищения ряда под ней");//Для вывода на экран
-                move(Direction.SOUTH);
+                move(Direction.SOUTH); 
             }
         }
     }
