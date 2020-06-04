@@ -1,28 +1,17 @@
 package my_tetris.events;
 
 import my_tetris.Element;
+import my_tetris.general_game_objects.AbstractShape;
+import my_tetris.general_game_objects.Glass;
 
 import java.util.ArrayList;
 import java.util.EventObject;
 
 public class GameEvent extends EventObject {
 
-    private int scoreDelta = 0;
-
-    private ArrayList<Element> glassElements;
-
-    private ArrayList<Element> nextActiveShape;
-
-    public ArrayList<Element> getNextActiveShape() {
-
-        return nextActiveShape;
-    }
-
-    public void setNextActiveShape(ArrayList<Element> nextActiveShape) {
-
-        this.nextActiveShape = nextActiveShape;
-    }
-//private ArrayList<Point>
+    private Glass newGlass;
+    
+    private AbstractShape newShape;
 
     /**
      * Constructs a prototypical Event.
@@ -34,19 +23,19 @@ public class GameEvent extends EventObject {
         super(source);
     }
 
-    public int getScoreDelta() {
-        return scoreDelta;
+    public Glass getNewGlass() {
+        return newGlass;
     }
 
-    public void setScoreDelta(int scoreDelta) {
-        this.scoreDelta = scoreDelta;
+    public void setNewGlass(Glass newGlass) {
+        this.newGlass = newGlass;
     }
 
-    public ArrayList<Element> getGlassElements() {
-        return glassElements;
+    public AbstractShape getNewShape() {
+        return newShape;
     }
 
-    public void setGlassElements(ArrayList<Element> glassElements) {
-        this.glassElements = glassElements;
+    public void setNewShape(AbstractShape newShape) {
+        this.newShape = newShape;
     }
 }

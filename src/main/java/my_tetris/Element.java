@@ -41,22 +41,37 @@ public class Element implements Cloneable{
 
     public void setColor(Color color) { this.color = color; }
 
-    public void setPosition(int col, int row) {
+    public void setPosition(int col, int row) { position.setLocation(col, row); }
+    
+    public void move(Direction d) {
+
+        int X_Shift = 0;
+        int Y_Shift = 0;
+        if (d == Direction.WEST) { X_Shift--; } 
+        else if (d == Direction.EAST) { X_Shift++; } 
+        else if (d == Direction.NORTH) { Y_Shift++; } 
+        else { Y_Shift--; }
         
-        position.setLocation(col, row);
+        position.setLocation(position.x + X_Shift, position.y + Y_Shift);
+    }
+    
+    public void rotate(Element rotationPoint) {
+
+        int col = position.y - rotationPoint.getRow();
+        int row = position.x - rotationPoint.getCol();
+        position.setLocation(rotationPoint.getCol() + col, rotationPoint.getRow() - row);
     }
     
     @Override
     public Element clone() throws CloneNotSupportedException {
+        
         Element clone = new Element(this.getCol(), this.getRow(), this.color);
         return clone;
     }
 
     //Для вывода на экран
     @Override
-    public String toString() {
-        return "(" + getCol() + ", " + getRow() + ", " + getColor() + ") ";
-    }
+    public String toString() { return "(" + getCol() + ", " + getRow() + ", " + getColor() + ") "; }
 
     @Override
     public boolean equals(Object o) {

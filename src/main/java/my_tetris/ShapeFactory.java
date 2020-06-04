@@ -6,8 +6,11 @@
 package my_tetris;
 
 import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Iterator;
+
+import my_tetris.events.*;
+import my_tetris.general_game_objects.AbstractShape;
 import my_tetris.general_game_objects.Shape;
 
 /**
@@ -18,117 +21,210 @@ public class ShapeFactory {
 
     /* Шаблон фигуры представлен в системе координат XY (первой указывается X)
      */
-    private ArrayList<ArrayList<Element> > shapeTemplates = new ArrayList<>();
+    private ArrayList<ShapeInfo> shapeTemplates = new ArrayList<>();
 
-    private ArrayList<Color> colors = new ArrayList<>();
+    private AbstractShape nextShape = null;
+    
+    public ShapeFactory() { createDefaultShapeTemplate(); }
 
-    private Shape nextShape;
+    public AbstractShape getNextShape() { return nextShape.clone(); }
 
-    public ShapeFactory() {
+    private void createDefaultShapeTemplate() {
 
-        ArrayList<Element> shape = new ArrayList<>();
+        int frequency = 10;
+        AbstractShape shape = new Shape();
+        ArrayList<ElementsMatrix> shapeForms = new ArrayList<>();
+        
+        
+        ElementsMatrix shapeElements = new ElementsMatrix(2);
         //Создаем фигуру L
-        shape.add(new Element(new Point(1, 0)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(3, 0)));
-        shape.add(new Element(new Point(3, 1)));
-        shapeTemplates.add(shape);
+        shapeElements.add(new Element(new Point(1, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeElements.add(new Element(new Point(3, 0)), 0);
+        shapeElements.add(new Element(new Point(3, 1)), 1);
+        shapeForms.add(shapeElements);
 
         //Создаем фигуру J
-        shape = new ArrayList<>();
-        shape.add(new Element(new Point(3, 0)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(1, 0)));
-        shape.add(new Element(new Point(1, 1)));
-        shapeTemplates.add(shape);
+        shapeElements = new ElementsMatrix(2);
+        shapeElements.add(new Element(new Point(3, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeElements.add(new Element(new Point(1, 0)), 0);
+        shapeElements.add(new Element(new Point(1, 1)), 1);
+        shapeForms.add(shapeElements);
 
         //Создаем фигуру I
-        shape = new ArrayList<>();
-        shape.add(new Element(new Point(0, 0)));
-        shape.add(new Element(new Point(1, 0)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(3, 0)));
-        shapeTemplates.add(shape);
+        shapeElements = new ElementsMatrix(1);
+        shapeElements.add(new Element(new Point(0, 0)), 0);
+        shapeElements.add(new Element(new Point(1, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeElements.add(new Element(new Point(3, 0)), 0);
+        shapeForms.add(shapeElements);
 
         //Создаем фигуру S
-        shape = new ArrayList<>();
-        shape.add(new Element(new Point(3, 1)));
-        shape.add(new Element(new Point(2, 1)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(1, 0)));
-        shapeTemplates.add(shape);
+        shapeElements = new ElementsMatrix(2);
+        shapeElements.add(new Element(new Point(3, 1)), 1);
+        shapeElements.add(new Element(new Point(2, 1)), 1);
+        shapeElements.add(new Element(new Point(1, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeForms.add(shapeElements);
 
         //Создаем фигуру Z
-        shape = new ArrayList<>();
-        shape.add(new Element(new Point(1, 1)));
-        shape.add(new Element(new Point(2, 1)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(3, 0)));
-        shapeTemplates.add(shape);
+        shapeElements = new ElementsMatrix(2);
+        shapeElements.add(new Element(new Point(1, 1)), 1);
+        shapeElements.add(new Element(new Point(2, 1)), 1);
+        shapeElements.add(new Element(new Point(3, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeForms.add(shapeElements);
 
         //Создаем фигуру O
-        shape = new ArrayList<>();
-        shape.add(new Element(new Point(1, 1)));
-        shape.add(new Element(new Point(2, 1)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(1, 0)));
-        shapeTemplates.add(shape);
+        shapeElements = new ElementsMatrix(2);
+        shapeElements.add(new Element(new Point(1, 1)), 1);
+        shapeElements.add(new Element(new Point(2, 1)), 1);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeElements.add(new Element(new Point(1, 0)), 0);
+        shapeForms.add(shapeElements);
 
         //Создаем фигуру T
-        shape = new ArrayList<>();
-        shape.add(new Element(new Point(3, 0)));
-        shape.add(new Element(new Point(2, 0)));
-        shape.add(new Element(new Point(2, 1)));
-        shape.add(new Element(new Point(1, 0)));
-        shapeTemplates.add(shape);
-
-        colors.add(new Color(144,0,255));
-        colors.add(new Color(0,255,212));
-        colors.add(new Color(65, 105, 225));
-        colors.add(new Color(4,188,254));
-        colors.add(new Color(254,0,150));
+        shapeElements = new ElementsMatrix(2);
+        shapeElements.add(new Element(new Point(3, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 0)), 0);
+        shapeElements.add(new Element(new Point(2, 1)), 1);
+        shapeElements.add(new Element(new Point(1, 0)), 0);
+        shapeForms.add(shapeElements);
+        
+        ArrayList<Color> colors = new ArrayList<>();
         colors.add(new Color(254,232,0));
         colors.add(new Color(255, 255, 0));
         colors.add(new Color(255, 140, 0));
         colors.add(new Color(0, 139, 69));
         colors.add(new Color(0, 238, 0));
 
-        ArrayList<Element> elements = shapeTemplates.get(calcNextShapeType());
-        setColor(elements);
-        nextShape = new Shape(elements);
-
+        ShapeInfo newTemplate = new ShapeInfo(frequency, shape, shapeForms, colors);
+        
+        shapeTemplates.add(newTemplate);
+        
     }
+    
+    private void setColor(ElementsMatrix elements, int shapeTemplateIndex) {
 
-    public Shape getNextShape() { return nextShape.clone(); }
+        if (shapeTemplates.get(shapeTemplateIndex).shapeColorsCount() == 0) {
+            
+            throw new InvalidTemplateDataException("В шаблоне с индексом " + shapeTemplateIndex + "не указаны цвета, " +
+                    "которыми можно покрасить фигуру");
+        }
+        
+        int colorIndex = calcNextShapeColor(shapeTemplates.get(shapeTemplateIndex).shapeColorsCount());
+        Color randomColor = shapeTemplates.get(shapeTemplateIndex).getShapeColor(colorIndex);
 
-    private void setColor(ArrayList<Element> elements) {
-
-        Color randomColor = colors.get(calcNextShapeColor());
-        for (Element tmp : elements) {
-
-            tmp.setColor(new Color(randomColor.getRGB()));
+        Iterator<Element> iterator = elements.allElementsIterator();
+        while (iterator.hasNext()) {
+            iterator.next().setColor(randomColor);
         }
     }
 
-    private int calcNextShapeColor() {
+    private int calcNextShapeColor(int ColorsCount) {
 
-        return (int)Math.round(Math.random() * (colors.size() - 1));
+        return (int)Math.round(Math.random() * (ColorsCount - 1));
     }
 
     private int calcNextShapeType() {
 
-        return (int)Math.round(Math.random() * (shapeTemplates.size() - 1));
+        int frequency = (int)Math.round(Math.random() * 9 + 1);
+
+        ArrayList<Integer> suitable = new ArrayList<>();
+
+        int index = 0;
+        for (ShapeInfo info : shapeTemplates) {
+            
+            if (info.getFrequency() >= frequency) { suitable.add(index); }
+            ++index;
+        }
+        
+        if (suitable.size() > 0) {
+            
+            return suitable.get((int)Math.round(Math.random() * (suitable.size() - 1)));
+        } else {
+            
+            return (int)Math.round(Math.random() * (shapeTemplates.size() - 1));
+        }
+        
     }
+    
+    private int calcNextShapeForm(int FormsCount) {
 
-    public Shape createShape() {
+        return (int)Math.round(Math.random() * (FormsCount - 1));
+    }
+    
+    private AbstractShape chooseRandomShapeTemplate() {
 
-        var createdShape = nextShape;
+        int shapeType = calcNextShapeType();
+        ShapeInfo newShapeInfo = shapeTemplates.get(shapeType);
+        int formType = calcNextShapeForm(newShapeInfo.shapeFormTemplatesCount());
+        ElementsMatrix newShapeElements = newShapeInfo.getShapeFormTemplate(formType);
+        setColor(newShapeElements, shapeType);
+        
+        Iterator<Element> iterator = newShapeElements.allElementsConstIterator();
+        while (iterator.hasNext()) {
+            
+            Element tmp = iterator.next();
+            if (tmp.getRow() < 0 && tmp.getCol() < 0) {
+                
+                throw new InvalidTemplateDataException("Форма фигуры с индексом " + formType + " задан неверно");
+            }
+        }
+        AbstractShape result = newShapeInfo.getShapeTemplate().clone();
+        result.setElements(newShapeElements);
+        return result;
+    }
+    
+    public AbstractShape createShape() {
+        
+        AbstractShape createdShape;
+        if (nextShape != null) { createdShape = nextShape; } 
+        else { createdShape = chooseRandomShapeTemplate(); }
+        nextShape = chooseRandomShapeTemplate();        
+        
+        fireNextShapeChanged();
 
-        ArrayList<Element> elements = shapeTemplates.get(calcNextShapeType());
-        setColor(elements);
-        nextShape = new Shape(elements);
         return createdShape;
     }
+    
+    public void addShapeTemplate(ShapeInfo shapeInfo) { shapeTemplates.add(shapeInfo); }
+
+    public void removeShapeTemplate(int templateIndex) { 
+        
+        if (templateIndex >= 0 && templateIndex < shapeTemplates.size()) { shapeTemplates.remove(templateIndex); }
+    }
+    
+    public ShapeInfo getShapeTemplate(int templateIndex ) {
+
+        if (templateIndex >= 0 && templateIndex < shapeTemplates.size()) { return shapeTemplates.get(templateIndex); }
+        
+        return null;
+    }
+
+    public int shapeTemplatesCount() { return shapeTemplates.size(); }
+    
+    //Сообщает игре о том, что следующая фигура поменялась
+    private ArrayList<ShapeFactoryListener> listeners = new ArrayList<>();
+
+    public void addShapeFactoryListener(ShapeFactoryListener l) {
+
+        if (!listeners.contains(l)) { listeners.add(l); }
+    }
+
+    public void removeShapeFactoryListener(ShapeFactoryListener l) { listeners.remove(l); }
+
+    private void fireNextShapeChanged() {
+
+        for (ShapeFactoryListener l : listeners) { l.nextShapeChanged(); }
+    }
+    
+    
+    public class InvalidTemplateDataException extends IllegalStateException {
+
+        public InvalidTemplateDataException(String s) { super(s); }
+    } 
 }
 
 

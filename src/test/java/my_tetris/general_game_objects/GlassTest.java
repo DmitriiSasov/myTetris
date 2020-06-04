@@ -1,18 +1,18 @@
 package my_tetris.general_game_objects;
 
 import my_tetris.Element;
-import my_tetris.HorizontalRow;
+import my_tetris.ElementsMatrix;
+import my_tetris.ImmutableElementMatrix;
 import my_tetris.ShapeFactory;
 import my_tetris.events.GlassEvent;
 import my_tetris.events.GlassListener;
-import my_tetris.events.HorizontalRowEvent;
-import my_tetris.events.HorizontalRowListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,6 +21,28 @@ class GlassTest {
 
     private Glass glass;
 
+    private boolean equals(ImmutableElementMatrix em1, ImmutableElementMatrix em2) {
+
+        if (em1 == em2) {
+            return true;
+        }
+        if (em1.elementsCount() != em2.elementsCount()) {
+            return false;
+        }
+
+        Iterator<Element> iterator1 = em1.allElementsConstIterator();
+        Iterator<Element> iterator2 = em2.allElementsConstIterator();
+
+        while (iterator1.hasNext()) {
+
+            if (!iterator1.next().equals(iterator2.next())) {
+
+                return false;
+            }
+        }
+        return true;
+    }
+    
     @BeforeEach
     void setUp() {
 
@@ -42,77 +64,92 @@ class GlassTest {
     }
 
     @Test
-    void setShapeFactory_elementOnGlassTop() {
+    void setActiveShape_elementsOnGlassTop() {
+        
+        ElementsMatrix instance = new ElementsMatrix(5);
+        Element e = new Element(1,10);
+        Element e1 = new Element(2,9);
+        Element e2 = new Element(3,8);
+        Element e3 = new Element(4,7);
+        instance.add(e, 1);
+        instance.add(e1, 2);
+        instance.add(e2, 3);
+        instance.add(e3, 4);
+        AbstractShape shape = new Shape(instance);
+        instance = new ElementsMatrix(5);
+        e = new Element(5,19);
+        e1 = new Element(6,18);
+        e2 = new Element(7,17);
+        e3 = new Element(8,16);
+        instance.add(e, 1);
+        instance.add(e1, 2);
+        instance.add(e2, 3);
+        instance.add(e3, 4);
+        AbstractShape expectedShape = new Shape(instance);
+        
+        
+        glass.setActiveShape(shape);
+        
+        assertTrue(glass.getActiveShape() == shape);
+        assertTrue(shape.getGlass() == glass);
+        assertTrue(equals(shape, expectedShape));
+    }
 
-        TestGlassObserver observer = new TestGlassObserver();
-        glass.addGlassListener(observer);
+    @Test
+    void setActiveShape_elementsOutsideBorder() {
+
+        ElementsMatrix instance = new ElementsMatrix(5);
+        Element e = new Element(7,10);
+        Element e1 = new Element(5,9);
+        Element e2 = new Element(3,8);
+        Element e3 = new Element(4,7);
+        instance.add(e, 1);
+        instance.add(e1, 2);
+        instance.add(e2, 3);
+        instance.add(e3, 4);
+        AbstractShape shape = new Shape(instance);
 
         try {
-
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            ArrayList<HorizontalRow> rows = (ArrayList<HorizontalRow>) f.get(glass);
-            rows.get(9).addElement(new Element(5,9));
-            glass.setShapeFactory(new ShapeFactory());
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            e.printStackTrace();
+            
+            glass.setActiveShape(shape);
+            assertTrue(false);
         }
-
-        boolean result = observer.callsCount == 1 && glass.getActiveShape() == null;
-
-        assertTrue(result);
-    }
-
-    @Test
-    void setShapeFactory_GlassIsEmpty() {
-
-        TestGlassObserver observer = new TestGlassObserver();
-        glass.addGlassListener(observer);
-        glass.setShapeFactory(new ShapeFactory());
-
-        boolean result = observer.callsCount == 0 && glass.getActiveShape() != null;
-
-        assertTrue(result);
-    }
-
-    @Test
-    void setActiveShape_noShape() {
-
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(0, -1)));
-        shapeElements.add(new Element(new Point(1, -1)));
-        shapeElements.add(new Element(new Point(2, -1)));
-        shapeElements.add(new Element(new Point(2, 0)));
-        var shape = new Shape(shapeElements);
-        glass.setActiveShape(shape);
-
-        boolean result = shape.getGlass() == glass && glass.getActiveShape() == shape;
-
-        assertTrue(result);
+        catch (AbstractShape.ShapeStartPositionException ex) { assertTrue(true);}
     }
 
     @Test
     void setActiveShape_thereIsShape() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(0, -1)));
-        shapeElements.add(new Element(new Point(1, -1)));
-        shapeElements.add(new Element(new Point(2, -1)));
-        shapeElements.add(new Element(new Point(2, 0)));
-        var shape_1 = new Shape(shapeElements);
-        glass.setActiveShape(shape_1);
+        ElementsMatrix instance = new ElementsMatrix(5);
+        Element e = new Element(0,10);
+        Element e1 = new Element(0,9);
+        Element e2 = new Element(1,8);
+        Element e3 = new Element(1,7);
+        instance.add(e, 1);
+        instance.add(e1, 2);
+        instance.add(e2, 3);
+        instance.add(e3, 4);
+        AbstractShape shape = new Shape(instance);
+        instance = new ElementsMatrix(5);
+        e = new Element(8,28);
+        e1 = new Element(8,27);
+        e2 = new Element(9,26);
+        e3 = new Element(9,25);
+        instance.add(e, 1);
+        instance.add(e1, 2);
+        instance.add(e2, 3);
+        instance.add(e3, 4);
+        AbstractShape expectedShape = new Shape(instance);
 
-        shapeElements.remove(3);
-        shapeElements.add(new Element(new Point(3, -1)));
-        var shape_2 = new Shape(shapeElements);
-        glass.setActiveShape(shape_2);
 
-        boolean result = shape_2.getGlass() == glass && glass.getActiveShape() == shape_2
-                && shape_1.getGlass() == null;
+        glass.setActiveShape(shape);
+        AbstractShape shapeClone = shape.clone();
+        glass.setActiveShape(shapeClone);
 
-        assertTrue(result);
+        assertTrue(glass.getActiveShape() == shapeClone);
+        assertTrue(shapeClone.getGlass() == glass);
+        assertTrue(shape.getGlass() == null);
+        assertTrue(equals(shapeClone, expectedShape));
 
     }
 
@@ -128,12 +165,16 @@ class GlassTest {
     @Test
     void unsetActiveShape_thereIsShape() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(0, -1)));
-        shapeElements.add(new Element(new Point(1, -1)));
-        shapeElements.add(new Element(new Point(2, -1)));
-        shapeElements.add(new Element(new Point(2, 0)));
-        var shape = new Shape(shapeElements);
+        ElementsMatrix instance = new ElementsMatrix(5);
+        Element e = new Element(0,10);
+        Element e1 = new Element(0,9);
+        Element e2 = new Element(1,8);
+        Element e3 = new Element(1,7);
+        instance.add(e, 1);
+        instance.add(e1, 2);
+        instance.add(e2, 3);
+        instance.add(e3, 4);
+        AbstractShape shape = new Shape(instance);
         glass.setActiveShape(shape);
 
         glass.unsetActiveShape();
@@ -143,301 +184,279 @@ class GlassTest {
     }
 
     @Test
-    void isFreePosition_posOutOfBorder() {
+    void add_oneRowCleared() {
 
-        assertFalse(glass.isFreePosition(new Point(-1, 10)));
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
+
+        for (int j = 0; j < glass.getColCount(); j++) {
+
+            elementsRow1.add(new Element(j, 0));
+        }
+        for (int j = 0; j < glass.getColCount() / 2; j++) {
+
+            elementsRow2.add(new Element(j, 1));
+        }
+        elementsRow3.add(new Element(5, 2));
+
+        glass.add(elementsRow3);
+        glass.add(elementsRow2);
+        glass.add(elementsRow1);
+
+        assertTrue(glass.elementsCount() == 6);
+        assertTrue(glass.elementsCount(0) == 5);
+        assertTrue(glass.elementsCount(1) == 1);
+        assertTrue(obs.callsCount == 7);
     }
 
     @Test
-    void isFreePosition_posHigherMaxRowIndex() {
+    void add_twoRowsCleared() {
 
-        assertTrue(glass.isFreePosition(new Point(0, 11)));
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ElementsMatrix instance = new ElementsMatrix(5);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
+    
+        for (int j = 0; j < glass.getColCount(); j++) {
+
+            elementsRow1.add(new Element(j, 0));
+        }
+        for (int j = 0; j < glass.getColCount(); j++) {
+
+            elementsRow2.add(new Element(j, 1));
+        }
+        elementsRow3.add(new Element(5, 2));
+        instance.add(elementsRow1, 0);
+        instance.add(elementsRow2, 1);
+        instance.add(elementsRow3, 2);
+        Element expectedResult = new Element(5, 0);
+        
+        glass.add(instance);
+        
+        assertTrue(glass.elementsCount() == 1);
+        assertTrue(glass.elementsCount(0) == 1);
+        assertTrue(expectedResult.equals(glass.getElement(0, 0)));
+        assertTrue(obs.callsCount == 4);
     }
 
     @Test
-    void isFreePosition_thereIsElementInPos() {
+    void add_zeroRowCleared() {
 
-        try {
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
 
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            ArrayList<HorizontalRow> rows = (ArrayList<HorizontalRow>) f.get(glass);
-            rows.get(0).addElement(new Element(0,0));
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+            elementsRow1.add(new Element(j, 0));
+        }
+        for (int j = 0; j < glass.getColCount() / 2; j++) {
 
-            e.printStackTrace();
+            elementsRow2.add(new Element(j, 1));
         }
 
-        assertFalse(glass.isFreePosition(new Point(0,0)));
+        glass.add(elementsRow1);
+        glass.add(elementsRow2);
+        glass.add(new Element(5, 2));
+
+        assertTrue(glass.elementsCount() == 15);
+        assertTrue(glass.elementsCount(0) == 9);
+        assertTrue(glass.elementsCount(1) == 5);
+        assertTrue(glass.elementsCount(2) == 1);
+        assertTrue(obs.callsCount == 6);
     }
 
     @Test
-    void isFreePosition_posIsFree() {
+    void add_GlassFilled() {
 
-        assertTrue(glass.isFreePosition(new Point(0, 0)));
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
+
+            elementsRow1.add(new Element(j, glass.getRowCount() - 1));
+        }
+        glass.add(elementsRow1);
+
+        assertTrue(glass.elementsCount() == 9);
+        assertTrue(glass.elementsCount(glass.getRowCount() - 1) == 9);
+        assertTrue(obs.callsCount == 2);
     }
 
     @Test
-    void absorbActiveShape_rowsAreNotCleared() {
+    void add_matrixesSizeDifferent() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(4, 3)));
-        shapeElements.add(new Element(new Point(5, 3)));
-        shapeElements.add(new Element(new Point(6, 3)));
-        shapeElements.add(new Element(new Point(6, 2)));
-        var shape = new Shape(shapeElements);
-        glass.setActiveShape(shape);
-        try {
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ElementsMatrix instance = new ElementsMatrix(11);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
 
-            Field f = glass.getClass().getDeclaredField("shapeFactory");
-            f.setAccessible(true);
-            f.set(glass, new ShapeFactory());
+        for (int j = 0; j < glass.getColCount(); j++) {
 
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
+            elementsRow1.add(new Element(j, 0));
         }
-        glass.absorbActiveShape();
+        for (int j = 0; j < glass.getColCount(); j++) {
 
-        boolean result = shape.getGlass() == null && glass.getActiveShape() != shape
-                && glass.getActiveShape() != null;
-
-        ArrayList<HorizontalRow> rows = null;
-
-        try {
-
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            rows = (ArrayList<HorizontalRow>) f.get(glass);
-            rows.get(0).addElement(new Element(0,0));
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            e.printStackTrace();
+            elementsRow2.add(new Element(j, 1));
         }
-
-        result = result && rows.get(2).elementsCount() == 1 && rows.get(3).elementsCount() == 3
-                && shape.elementsCount() == 0;
-
-        for (int i = 0; i < rows.get(3).elementsCount() && result; i++) {
-
-            result = result && rows.get(3).getElement(i).equals(shapeElements.get(i));
-        }
-        result = result && rows.get(2).getElement(0).equals(shapeElements.get(3));
-
-        assertTrue(result);
+        elementsRow3.add(new Element(5, 2));
+        
+        assertFalse(glass.add(instance));
+        assertTrue(obs.callsCount == 0);
     }
 
     @Test
-    void absorbActiveShape_oneRowCleared() {
+    void add_matrixHasLongString() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(4, 3)));
-        shapeElements.add(new Element(new Point(5, 3)));
-        shapeElements.add(new Element(new Point(6, 3)));
-        shapeElements.add(new Element(new Point(6, 2)));
-        var shape = new Shape(shapeElements);
-        glass.setActiveShape(shape);
-        TestHorizontalRowObserver rowObserver = new TestHorizontalRowObserver();
-        glass.addHorizontalRowListener(rowObserver);
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ElementsMatrix instance = new ElementsMatrix(3);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
 
-        ArrayList<HorizontalRow> rows = null;
-        try {
+        for (int j = 0; j < glass.getColCount() + 10; j++) {
 
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            rows = (ArrayList<HorizontalRow>) f.get(glass);
-            f = glass.getClass().getDeclaredField("shapeFactory");
-            f.setAccessible(true);
-            f.set(glass, new ShapeFactory());
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            e.printStackTrace();
+            elementsRow1.add(new Element(j, 0));
         }
+        for (int j = 0; j < glass.getColCount(); j++) {
 
-        for (int i = 0; i < glass.getColCount(); i++) {
-
-            if (i != 6) {
-
-                rows.get(2).addElement(new Element(i, 2));
-            }
+            elementsRow2.add(new Element(j, 1));
         }
-        rows.get(3).addElement(new Element(3, 3));
-        rows.get(4).addElement(new Element(3, 4));
-
-        glass.absorbActiveShape();
-
-        boolean result = rowObserver.callsCount == 1;
-
-        result = result && rows.get(2).elementsCount() == 4 && rows.get(3).elementsCount() == 1
-                && rows.get(4).elementsCount() == 0 && shape.elementsCount() == 0;
-
-        result = result && rows.get(2).getElement(0).equals(new Element(3, 2));
-        for (int i = 0; i < rows.get(2).elementsCount() - 1; i++) {
-
-            Element tmp = new Element (shapeElements.get(i).getCol(), shapeElements.get(i).getRow() - 1);
-            rows.get(2).getElement(i + 1).equals(tmp);
-        }
-        result = result && rows.get(3).getElement(0).equals(new Element(3, 3));
-
-        assertTrue(result);
+        elementsRow3.add(new Element(5, 2));
+        instance.add(elementsRow1, 0);
+        instance.add(elementsRow2, 1);
+        instance.add(elementsRow3, 2);
+        
+        assertFalse(glass.add(instance));
+        assertTrue(obs.callsCount == 0);
     }
 
     @Test
-    void absorbActiveShape_twoRowCleared() {
+    void remove_index() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(4, 3)));
-        shapeElements.add(new Element(new Point(5, 3)));
-        shapeElements.add(new Element(new Point(6, 3)));
-        shapeElements.add(new Element(new Point(6, 2)));
-        var shape = new Shape(shapeElements);
-        glass.setActiveShape(shape);
-        TestHorizontalRowObserver rowObserver = new TestHorizontalRowObserver();
-        glass.addHorizontalRowListener(rowObserver);
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ElementsMatrix instance = new ElementsMatrix(3);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
 
-        ArrayList<HorizontalRow> rows = null;
-        try {
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            rows = (ArrayList<HorizontalRow>) f.get(glass);
-            f = glass.getClass().getDeclaredField("shapeFactory");
-            f.setAccessible(true);
-            f.set(glass, new ShapeFactory());
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            e.printStackTrace();
+            elementsRow1.add(new Element(j, 0));
         }
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
-        for (int i = 0; i < glass.getColCount(); i++) {
-
-            if (i != 6) { rows.get(2).addElement(new Element(i, 2)); }
+            elementsRow2.add(new Element(j, 1));
         }
-        for (int i = 0; i < glass.getColCount(); i++) {
+        elementsRow3.add(new Element(5, 2));
+        instance.add(elementsRow1, 0);
+        instance.add(elementsRow2, 1);
+        instance.add(elementsRow3, 2);
+        glass.add(instance);
+        
+        glass.remove(0, 2);
 
-            if (i < 4 || i > 6) { rows.get(3).addElement(new Element(i, 3)); }
-        }
-        rows.get(4).addElement(new Element(3, 4));
-
-        glass.absorbActiveShape();
-
-        boolean result = rowObserver.callsCount == 2;
-
-        result = result && rows.get(2).elementsCount() == 1 && rows.get(3).elementsCount() == 0
-                && rows.get(4).elementsCount() == 0 && shape.elementsCount() == 0;
-
-        result = result && rows.get(2).getElement(0).equals(new Element(3, 2));
-
-        assertTrue(result);
+        assertTrue(glass.elementsCount(2) == 0);
+        assertTrue(obs.callsCount == 3);
     }
 
     @Test
-    void absorbActiveShape_lastRowFilled() {
+    void remove_element() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(4, 9)));
-        shapeElements.add(new Element(new Point(5, 9)));
-        shapeElements.add(new Element(new Point(6, 9)));
-        shapeElements.add(new Element(new Point(7, 9)));
-        var shape = new Shape(shapeElements);
-        glass.setActiveShape(shape);
-        TestGlassObserver glassObserver = new TestGlassObserver();
-        glass.addGlassListener(glassObserver);
-        glass.absorbActiveShape();
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ElementsMatrix instance = new ElementsMatrix(3);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
 
-        boolean result = glassObserver.callsCount == 1;
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
-        ArrayList<HorizontalRow> rows = null;
-        try {
-
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            rows = (ArrayList<HorizontalRow>) f.get(glass);
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            e.printStackTrace();
+            elementsRow1.add(new Element(j, 0));
         }
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
-        result = result && rows.get(9).elementsCount() == 4 && shape.elementsCount() == 0;
-
-        for (int i = 0; i < rows.get(9).elementsCount() && result; i++) {
-
-            result = result && rows.get(9).getElement(i).equals(shapeElements.get(i));
+            elementsRow2.add(new Element(j, 1));
         }
+        elementsRow3.add(new Element(5, 2));
+        instance.add(elementsRow1, 0);
+        instance.add(elementsRow2, 1);
+        instance.add(elementsRow3, 2);
+        glass.add(instance);
 
-        assertTrue(result);
+        glass.remove(new Element(5, 2));
+
+        assertTrue(glass.elementsCount(2) == 0);
+        assertTrue(obs.callsCount == 3);
     }
 
     @Test
-    void absorbActiveShape_onPlaceOfShapeElementThereIsOtherShapeElement() {
+    void remove_elements() {
 
-        ArrayList<Element> shapeElements = new ArrayList<>();
-        shapeElements.add(new Element(new Point(4, 3)));
-        shapeElements.add(new Element(new Point(5, 3)));
-        shapeElements.add(new Element(new Point(6, 3)));
-        shapeElements.add(new Element(new Point(6, 2)));
-        var shape = new Shape(shapeElements);
-        glass.setActiveShape(shape);
-        try {
+        var obs = new TestGlassObserver();
+        glass.addGlassListener(obs);
+        ElementsMatrix instance = new ElementsMatrix(3);
+        ArrayList<Element> elementsRow1 = new ArrayList<>();
+        ArrayList<Element> elementsRow2 = new ArrayList<>();
+        ArrayList<Element> elementsRow3 = new ArrayList<>();
 
-            Field f = glass.getClass().getDeclaredField("rows");
-            f.setAccessible(true);
-            ArrayList<HorizontalRow> rows = (ArrayList<HorizontalRow>) f.get(glass);
-            rows.get(2).addElement(new Element(6,2));
-            f = glass.getClass().getDeclaredField("shapeFactory");
-            f.setAccessible(true);
-            f.set(glass, new ShapeFactory());
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
-            glass.absorbActiveShape();
-            assertTrue(false);
-
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-
-            e.printStackTrace();
-
-        } catch (RuntimeException ex) {
-
-            assertTrue(true);
+            elementsRow1.add(new Element(j, 0));
         }
+        for (int j = 0; j < glass.getColCount() - 1; j++) {
 
+            elementsRow2.add(new Element(j, 1));
+        }
+        elementsRow3.add(new Element(5, 2));
+        instance.add(elementsRow1, 0);
+        instance.add(elementsRow2, 1);
+        instance.add(elementsRow3, 2);
+        glass.add(instance);
+        ArrayList<Element> elementsToRemove = new ArrayList<>();
+        elementsToRemove.add(new Element(0, 1));
+        elementsToRemove.add(new Element(5, 2));
+        glass.remove(elementsToRemove);
 
-        //При поглощении фигуры в ряд добавить элемент с такой же позицией, как и у одного из элементов фигуры
+        assertTrue(glass.elementsCount() == 17);
+        assertTrue(glass.elementsCount(2) == 0);
+        assertTrue(glass.elementsCount(1) == 8);
+        assertTrue(obs.callsCount == 3);
     }
-
+    
     //Класс для тестирования сигналов, испущенных стаканом
     private class TestGlassObserver implements GlassListener {
 
         private int callsCount = 0;
 
         @Override
-        public void glassFilled() {
-
-            ++callsCount;
-        }
+        public void glassFilled() { ++callsCount;}
 
         @Override
-        public void glassContentChanged(GlassEvent e) {
-
-        }
-    }
-
-    //Класс для тестирования сигналов, испущенных стаканом
-    private class TestHorizontalRowObserver implements HorizontalRowListener {
-
-        private int callsCount = 0;
+        public void needNewActiveShape() { ++callsCount; }
 
         @Override
-        public void HorizontalRowCleared(HorizontalRowEvent e) {
+        public void shapeAbsorbed() { ++callsCount; }
 
-            if (e.getScore() == glass.getColCount()) {
+        @Override
+        public void rowCleared(GlassEvent e) { ++callsCount; }
 
-                ++callsCount;
-            }
-        }
+        @Override
+        public void glassContentChanged() { ++callsCount; }
+
     }
-
+/*
+    
+*/
 }

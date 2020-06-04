@@ -22,19 +22,16 @@ public class Border {
     public Border(int minRowIndex, int minColIndex,
             int maxColIndex) {
         
-        if (maxColIndex - minColIndex <= 0) {
-            
-            throw new BorderParametersException("Границы заданы неверно");
-        }
+        if (maxColIndex - minColIndex <= 0) { throw new BorderParametersException("Границы заданы неверно"); }
         
         this.minRowIndex = minRowIndex;
         this.minColIndex = minColIndex;
         this.maxColIndex = maxColIndex;
     }
   
-    public boolean isPositionOutsideBorder(Point position) {
+    public boolean isElementOutsideBorder(Element e) {
         
-        return position.getX() > maxColIndex || position.getX() < minColIndex || position.getY() < minRowIndex;
+        return e.getCol() > maxColIndex || e.getCol() < minColIndex || e.getRow() < minRowIndex;
     }
 
     public class BorderParametersException extends IllegalArgumentException {
