@@ -5,6 +5,7 @@
  */
 package my_tetris.events;
 
+
 /**
  *
  * @author bopoh
@@ -14,8 +15,8 @@ public interface GameListener {
     public void gameFinished();
 
     public void scoreChanged();
-
-    public void glassContentChanged(GameEvent e);
-
-    public void nextShapeChanged(GameEvent e);
+    
+    public void glassWasSetup(GameEvent e);
+    
+    public void activeShapeChanged(GameEvent e);
 }

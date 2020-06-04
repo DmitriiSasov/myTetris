@@ -4,9 +4,11 @@ import my_tetris.Direction;
 import my_tetris.Game;
 import my_tetris.events.GameEvent;
 import my_tetris.events.GameListener;
+import my_tetris.general_game_objects.Shape;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
 
 public class GamePanel extends JFrame{
 
@@ -18,34 +20,45 @@ public class GamePanel extends JFrame{
 
     private final int NEXT_SHAPE_SPACE_WIDTH = 4;
 
-    private GlassField glassField = null;
+    private ElementsPanel glassField = new ElementsPanel(GLASS_HEIGHT, GLASS_WIDTH);
 
-    private NextShapeSpace nextShapeSpace = null;
+    private ElementsPanel nextShapeSpace = new ElementsPanel(NEXT_SHAPE_SPACE_HEIGHT, NEXT_SHAPE_SPACE_WIDTH);
 
-    private Game game = null;
+    private GlassController glassController = new GlassController();
+
+    private ShapeController shapeController = new ShapeController();
+    
+    private NextShapeController nextShapeController = new NextShapeController();
+    
+    private KeyAdapter keyAdapter =  new java.awt.event.KeyAdapter() {
+
+        public void keyPressed(java.awt.event.KeyEvent evt) {
+            glassPanelKeyPressed(evt);
+        }
+    };
+    
+    private Game game = new Game();
 
     /**
      * Creates new form GamePanel
      */
     public GamePanel() {
-
-        game = new Game();
+        
+        shapeController.setElementsPanel(glassField);
+        glassController.setElementsPanel(glassField);
+        nextShapeController.setElementsPanel(nextShapeSpace);
+        nextShapeController.setShapeFactory(game.getShapeFactory());
+        
         game.addGameListener(new GameObserver());
-        glassField = new GlassField(GLASS_HEIGHT, GLASS_WIDTH);
-        nextShapeSpace = new NextShapeSpace(NEXT_SHAPE_SPACE_HEIGHT, NEXT_SHAPE_SPACE_WIDTH);
         initComponents();
     }
 
+    public Game getGame() { return game; }
+
     private void initComponents() {
 
-        setTitle("Test_GUI");
+        setTitle("Tetris");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-        addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                glassPanelKeyPressed(evt);
-            }
-        });
 
         content = (JPanel) this.getContentPane();
         content.setPreferredSize(new Dimension(360,400));
@@ -108,13 +121,13 @@ public class GamePanel extends JFrame{
 
         if (game != null && game.isInProgress()) {
             if (evt.getKeyCode() == evt.VK_RIGHT) {
-                game.moveActiveShape(Direction.EAST);
+                shapeController.getShape().move(Direction.EAST);
             } else if (evt.getKeyCode() == evt.VK_LEFT) {
-                game.moveActiveShape(Direction.WEST);
+                shapeController.getShape().move(Direction.WEST);
             }  else if (evt.getKeyCode() == evt.VK_DOWN) {
-                game.moveActiveShape(Direction.SOUTH);
+                shapeController.getShape().move(Direction.SOUTH);
             } else if (evt.getKeyCode() == evt.VK_UP) {
-                game.rotateActiveShape();
+                shapeController.getShape().rotate();
             }
 
         }
@@ -123,6 +136,7 @@ public class GamePanel extends JFrame{
     private void bStartActionPerformed(java.awt.event.ActionEvent evt) {
 
         startGameButton.setEnabled(false);
+        addKeyListener(keyAdapter);
         game.start();
     }
 
@@ -136,6 +150,7 @@ public class GamePanel extends JFrame{
             startGameButton.setEnabled(true);
             String str = "Игра закончилась.\nВаш счет: " + game.getScore();
             JOptionPane.showMessageDialog(null, str, "Конец игры", JOptionPane.INFORMATION_MESSAGE);
+            removeKeyListener(keyAdapter);
         }
 
         @Override
@@ -144,10 +159,11 @@ public class GamePanel extends JFrame{
         }
 
         @Override
-        public void glassContentChanged(GameEvent e) { glassField.update(e.getGlassElements());}
+        public void glassWasSetup(GameEvent e) { glassController.setGlass(e.getNewGlass()); }
 
         @Override
-        public void nextShapeChanged(GameEvent e) { nextShapeSpace.update(e.getNextActiveShape()); }
+        public void activeShapeChanged(GameEvent e) { shapeController.setShape(e.getNewShape()); }
+
     }
 
 }

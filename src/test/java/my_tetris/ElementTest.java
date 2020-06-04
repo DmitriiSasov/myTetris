@@ -78,4 +78,117 @@ class ElementTest {
 
         assertArrayEquals(expResult, result);
     }
+
+    /**
+     * Test of move method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testMoveUp() {
+        System.out.println("move");
+
+        Element instance = new Element(-1, 3);
+        int[] expResult = {-1, 4};
+        instance.move(Direction.NORTH);
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
+
+    /**
+     * Test of move method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testMoveDown() {
+        System.out.println("move");
+
+        Element instance = new Element(-1, 3);
+        int[] expResult = {-1, 2};
+        instance.move(Direction.SOUTH);
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
+
+    /**
+     * Test of move method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testMoveRight() {
+        System.out.println("move");
+
+        Element instance = new Element(-1, 3);
+        int[] expResult = {0, 3};
+        instance.move(Direction.EAST);
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
+
+    /**
+     * Test of move method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testMoveLeft() {
+        System.out.println("move");
+
+        Element instance = new Element(-1, 3);
+        int[] expResult = {-2, 3};
+        instance.move(Direction.WEST);
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
+
+    /**
+     * Test of rotate method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testRotate_rotateRotationCenter() {
+        System.out.println("rotate");
+
+        Element instance = new Element(-1, 3);
+        Element rotationCenter = new Element(-1, 3); 
+        int[] expResult = {-1, 3};
+        instance.rotate(rotationCenter);
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
+
+    /**
+     * Test of rotate method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testRotate() {
+        System.out.println("rotate");
+
+        Element instance = new Element(-1, 3);
+        Element rotationCenter = new Element(1, 4);
+        int[] expResult = {0, 6};
+        instance.rotate(rotationCenter);
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
+
+    /**
+     * Test of clone method, of class Element.
+     */
+    @org.junit.jupiter.api.Test
+    public void testClone() {
+        System.out.println("clone");
+
+        Element instance = new Element(-1, 3);
+        int[] expResult = {-1, 3};
+        Element clone = null;
+        try { 
+         
+            clone = instance.clone();
+            clone.move(Direction.SOUTH);
+        } 
+        catch (CloneNotSupportedException e) { e.printStackTrace(); }
+        int [] result = {instance.getCol(), instance.getRow()};
+
+        assertArrayEquals(expResult, result);
+    }
 }

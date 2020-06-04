@@ -13,5 +13,11 @@ public interface GlassListener {
     
     public void glassFilled();
 
-    public void glassContentChanged(GlassEvent e);
+    public void needNewActiveShape();
+    
+    public void shapeAbsorbed();
+    
+    public void rowCleared(GlassEvent e);
+    
+    public void glassContentChanged();
 }

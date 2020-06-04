@@ -6,106 +6,80 @@
 package my_tetris.general_game_objects;
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import my_tetris.*;
 import my_tetris.events.GlassEvent;
 import my_tetris.events.GlassListener;
-import my_tetris.events.HorizontalRowEvent;
-import my_tetris.events.HorizontalRowListener;
+
+import javax.swing.text.AbstractDocument;
 
 /**
  *
  * @author bopoh
  */
-public class Glass {
-    
+public class Glass implements ImmutableElementMatrix {
+
     public final int MIN_ROW_COUNT = 6;
 
     public final int MIN_COL_COUNT = 6;
 
-    private ArrayList<Element> elements = new ArrayList<>(); // Список заполненных элементов на поле
+    private AbstractShape activeShape;
     
-    private Shape activeShape;
-    
+    private ElementsMatrix elementsMatrix;
+
     private int rowCount;
-    
+
     private int colCount;
     
-    private ShapeFactory shapeFactory;
-
-    private ArrayList<HorizontalRow> rows = new ArrayList<>();
-    
     private Border border;
-    
+
     public Glass(int colCount, int rowCount) {
-        
+
         if (colCount < MIN_COL_COUNT || rowCount < MIN_ROW_COUNT) {
-            
+
             throw new GlassSizeException("Размеры стакана слишком маленькие");
         }
-        
+
         this.rowCount = rowCount;
         this.colCount = colCount;
 
-        for (int i = 0; i < this.rowCount; ++i) {
-            
-            HorizontalRow row = new HorizontalRow(this.colCount);
-            if (i > 0) { rows.get(i - 1).setHigherHorizontalRow(row); }
-            row.addHorizontalRowListener(new HorizontalRowObserver());
-            rows.add(row);
-        }
-        
+        elementsMatrix = new ElementsMatrix(rowCount);
+
         border = new Border(0, 0, this.colCount -1);
-
-        elements.clear();//Для вывода на экран
     }
 
-    public int getRowCount() {
-        return rowCount;
-    }
+    public int getRowCount() { return rowCount; }
 
-    public int getColCount() {
-        return colCount;
-    }
+    public int getColCount() { return colCount; }
 
-    public Border getBorder() {
-        return border;
-    }
+    public Border getBorder() { return border; }
 
-    public Shape getActiveShape() {
+    public AbstractShape getActiveShape() { return activeShape; }
+
+    public void setActiveShape(AbstractShape shape) {
+
+        if (activeShape != null) { activeShape.unsetGlass(); }
         
-        return activeShape;
-    }
-    
-    void setActiveShape(Shape shape) {
-
-        if (activeShape != null) {
-
-            activeShape.unsetGlass();
-        }
-
         activeShape = shape;
-        
-        if (activeShape.getGlass() != this) {
-            activeShape.setGlass(this);
+
+        if (activeShape.getGlass() != this) { activeShape.setGlass(this); }
+
+        if (activeShape != null && activeShape.getGlass() == this) {
+            
+            activeShape.setStartPosition(0, rowCount - 1, 0, colCount - 1);
+            //Проверить, что фигура находится внутри стакана
+            Iterator<Element> iterator = activeShape.allElementsConstIterator();
+            while (iterator.hasNext()) {
+
+                if (border.isElementOutsideBorder(iterator.next())) {
+
+                    throw new ActiveShapeOutOfGlassBorder("При установке в стакан фигура оказалась за его пределами");
+                }
+            }
         }
         
-    }
-    
-    void unsetActiveShape() {
-
-        var shape = activeShape;
-        activeShape = null;
-
-        if (shape != null && shape.getGlass() != null) {
-            shape.unsetGlass();
-        }
-    }
-
-    public void setShapeFactory(ShapeFactory shapeFactory) {
-        
-        this.shapeFactory = shapeFactory;
-        setActiveShape(this.shapeFactory.createShape());
+        /*
         activeShape.setStartPosition(0, rowCount - 1, 0, colCount - 1);
 
         boolean isCorrectStartPosition = true;
@@ -119,175 +93,215 @@ public class Glass {
 
             unsetActiveShape();
             fireGlassFilled();
-        }
+        }*/
     }
 
-    public ShapeFactory getShapeFactory() {
-        return shapeFactory;
+    public void unsetActiveShape() {
+
+        var shape = activeShape;
+        activeShape = null;
+
+        if (shape != null && shape.getGlass() != null) { shape.unsetGlass(); }
     }
 
-    public boolean isFreePosition(Point position) {
+    public boolean isElementOutsideGlassBorder(Element e) { return border.isElementOutsideBorder(e); }
+    
+    private void clearFilledRows() {
 
-        return !border.isPositionOutsideBorder(position) && (position.getY() >= rowCount ||
-                !rows.get((int)position.getY()).hasElement(new Element(position)));
-    }
-        
-    void absorbActiveShape() {
-        
-        while(activeShape.hasElements()) {
+        //Очистить пустые ряды
+        for (int i = 0; i < rowCount && elementsCount(i) > 0; i++) {
             
-            int lowestShapeElementIndex = 0;
-            for (int i = 1; i < activeShape.elementsCount(); ++i) {
+            if (elementsCount(i) >= colCount) {
                 
-                if (activeShape.getElement(lowestShapeElementIndex).getRow() > activeShape.getElement(i).getRow()) {
+                int removedElementsCount = elementsMatrix.clear(i).size();//Очистить ряд
+                //Сдвинуть непустые ряды выше текущего на 1 клетку вниз
+                for (int j = i + 1; j < rowCount && elementsCount(j) > 0; j++) {
                     
-                    lowestShapeElementIndex = i;
-                }              
-            }
-            
-            Element movedElement = activeShape.takeElement(lowestShapeElementIndex);
-
-            //Если элемент фигуры находится ниже уровня стакана при появлении
-            if (movedElement.getRow() < rowCount) {
-
-                boolean isAdded = rows.get(movedElement.getRow()).addElement(movedElement);
-                if (!isAdded) {
-
-                    throw new EqualElementsInGlassException("Элемент фигуры не может быть поглощен стаканом, т.к. в " +
-                            "стакане уже есть элемент с такой же позицией");
+                    ArrayList<Element> movedElements = elementsMatrix.clear(j);
+                    for (Element e : movedElements) { e.move(Direction.SOUTH); }
+                    elementsMatrix.add(movedElements, j - 1);                    
                 }
+                --i;
+                GlassEvent evt = new GlassEvent(this);
+                evt.setRemovedElementsCount(removedElementsCount);
+                fireRowCleared(evt);
             }
-
         }
-
-        System.out.println("Фигура поглощена");//Для вывода на экран
-        updateGlassContent();//Для вывода на экран
-
-        unsetActiveShape();
-        if (isHighestRowFilled()) {
-
-            setActiveShape(shapeFactory.createShape());
-            activeShape.setStartPosition(0, this.rowCount - 1, 0, this.colCount -1);
-
-        } else {
-
-            fireGlassFilled();
-        }
-            
-    }
-
-    private boolean isHighestRowFilled() {
-        
-        return rows.get(rows.size() - 1).elementsCount() == 0;
     }
     
-    //Для вывода в UI
-    public void updateGlassContent() {
-
-        elements.clear();
-
-        //Заполнить клетки, которые есть в рядах
-        for (HorizontalRow row : rows) {
-
-            for (int i = 0; i < row.elementsCount(); ++i) {
-
-                elements.add(row.getElement(i));
-            }
-        }
-
-        //Заполнить текущую позицию фигуры
-        for (int i = 0; i < activeShape.elementsCount(); ++i) {
-
-            if (activeShape.getElement(i).getRow() < rowCount) {
-
-                elements.add(activeShape.getElement(i));
-            }
-        }
-
-        GlassEvent e = new GlassEvent(this);
-        e.setGlassElements(elements);
-        fireGlassContentChanged(e);
+    Element remove(int index, int rowIndex) { 
+        
+        Element tmp = elementsMatrix.remove(index,rowIndex);
+        fireGlassContentChanged();
+        return tmp; 
     }
 
+    void remove(Element e) { 
+        
+        elementsMatrix.remove(e);
+        fireGlassContentChanged();
+    }
+    
+    void remove(ArrayList<Element> elements) { 
+        
+        elementsMatrix.remove(elements);
+        fireGlassContentChanged();
+    }
+    
+    boolean add(ElementsMatrix em) {
+
+        if (em.rowCount() > elementsMatrix.rowCount()) { return false; }
+
+        for (int i = 0; i < em.rowCount(); i++) {
+            
+            if (em.elementsCount(i) > colCount) { return false; } 
+        }
+        
+        Iterator<Element> iterator = em.allElementsConstIterator();
+        while (iterator.hasNext()) {
+            
+            Element tmp = iterator.next();
+            if (!isElementOutsideGlassBorder(tmp)) {
+                
+                try { elementsMatrix.add(tmp.clone(), tmp.getRow()); } 
+                catch (CloneNotSupportedException e) { e.printStackTrace(); }
+            }
+        }
+
+        clearFilledRows();
+        fireEventsOfShapeAdding();
+
+        return true;
+    }
+    
+    boolean add(Element e) {
+
+        boolean res = false;
+        
+        if (!isElementOutsideGlassBorder(e)) {
+
+            try { res = elementsMatrix.add(e.clone(), e.getRow()); } 
+            catch (CloneNotSupportedException ex) { ex.printStackTrace(); }
+
+            clearFilledRows();
+            fireEventsOfShapeAdding();
+        }
+
+        return  res;
+    }
+    
+    void add(ArrayList<Element> elements) {
+
+        for (Element e: elements) {
+            
+            if (!isElementOutsideGlassBorder(e)) {
+                
+                try { elementsMatrix.add(e.clone(), e.getRow()); } 
+                catch (CloneNotSupportedException ex) { ex.printStackTrace(); }
+            }
+        }
+        
+        
+        clearFilledRows();
+        fireEventsOfShapeAdding();
+        
+    }
+    
+    private void fireEventsOfShapeAdding() {
+        
+        fireShapeAbsorbed();
+        System.out.println("Фигура поглощена");//Для вывода на экран
+
+        if (isHighestRowFilled()) { fireGlassFilled(); }
+        else { fireNeedNewActiveShape(); }
+    }
+    
+    void clear() { elementsMatrix.clear(); }
+    
+    ArrayList<Element> clear(int rowIndex) { return elementsMatrix.clear(rowIndex); }
+    
+    Element getElement(int index, int rowIndex) { return elementsMatrix.getElement(index, rowIndex); }
+     
+    private boolean isHighestRowFilled() { return elementsMatrix.elementsCount(rowCount - 1) > 0; }
+
+    @Override
+    public Iterator<Element> allElementsConstIterator() { return elementsMatrix.allElementsConstIterator(); }
+
+    @Override
+    public Iterator<Element> constIteratorByRow(int index) { return elementsMatrix.constIteratorByRow(index); }
+
+    @Override
+    public Element getElementCopy(int index, int rowIndex) {
+
+        try { return elementsMatrix.getElement(index, rowIndex).clone(); }
+        catch (CloneNotSupportedException e) { e.printStackTrace(); }
+
+        return null;
+    }
+
+    @Override
+    public int elementsCount() { return elementsMatrix.elementsCount(); }
+
+    @Override
+    public int elementsCount(int rowIndex) { return elementsMatrix.elementsCount(rowIndex); }
+
+    @Override
+    public boolean contains(Element e) { return elementsMatrix.contains(e); }
+
+    @Override
+    public boolean hasCommonElements(ElementsMatrix em) { return elementsMatrix.hasCommonElements(em); }
 
 
     //Сообщает игре об перемещении фигуры и обновлении рядов, также о заполненности
     private ArrayList<GlassListener> glassListeners = new ArrayList<>();
-    
-    public void addGlassListener(GlassListener l) {
-        
-        if (!glassListeners.contains(l)) {
-            
-            glassListeners.add(l);
-        }        
-    }
-    
-    public void removeGlassListener(GlassListener l) {
-        
-        glassListeners.remove(l);
-    }
-    
+
+    public void addGlassListener(GlassListener l) { if (!glassListeners.contains(l)) { glassListeners.add(l); } }
+
+    public void removeGlassListener(GlassListener l) { glassListeners.remove(l); }
+
     public void fireGlassFilled() {
-        
+
         for (GlassListener l : glassListeners) {
 
             System.out.println("Стакан заполнен");//Для вывода на экран
             l.glassFilled();
-        }        
-    }
-
-    public void fireGlassContentChanged(GlassEvent e) {
-
-        for (GlassListener l : glassListeners) {
-
-            l.glassContentChanged(e);
         }
     }
-    
-    
-    //Стакан просто передает сообщение о том, что ряд очистился фигуре и игре
-    private class HorizontalRowObserver implements HorizontalRowListener {
 
-        @Override
-        public void HorizontalRowCleared(HorizontalRowEvent e) {
+    public void fireNeedNewActiveShape() {
 
-            fireHorizontalRowCleared(e);
-        }
-        
+        for (GlassListener l : glassListeners) { l.needNewActiveShape(); }
     }
     
-    private ArrayList<HorizontalRowListener> rowListeners = new ArrayList<>();
-    
-    public void addHorizontalRowListener(HorizontalRowListener l) {
-        
-        if (!rowListeners.contains(l)) {
-            
-            rowListeners.add(l);
-        }
-    }
-    
-    public void removeHorizontalRowListener(HorizontalRowListener l) {
-       
-        rowListeners.remove(l);
-    }
-    
-    public void fireHorizontalRowCleared(HorizontalRowEvent e) {
-        
-        for (HorizontalRowListener l : rowListeners) {
-            
-            l.HorizontalRowCleared(e);
-        }        
+    public void fireShapeAbsorbed() {
+
+        for (GlassListener l: glassListeners) { l.shapeAbsorbed(); }
     }
 
+    public void fireRowCleared(GlassEvent e) {
 
+        for (GlassListener l : glassListeners) { l.rowCleared(e);}
+    }
+    
+    public void fireGlassContentChanged() {
 
+        for (GlassListener l : glassListeners) { l.glassContentChanged(); }
+    }
+    
+   
+    
+    
+    public class ActiveShapeOutOfGlassBorder extends IllegalStateException {
 
+        public ActiveShapeOutOfGlassBorder(String s) { super(s); }
+    }
+    
     public class GlassSizeException extends IllegalArgumentException {
 
         public GlassSizeException(String s) { super(s); }
     }
 
-    public class EqualElementsInGlassException extends RuntimeException {
+    public class EqualElementsInGlassException extends IllegalStateException {
 
         public EqualElementsInGlassException(String s) { super(s); }
     }

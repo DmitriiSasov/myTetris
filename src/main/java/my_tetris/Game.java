@@ -7,7 +7,7 @@ package my_tetris;
 
 import my_tetris.events.*;
 import my_tetris.general_game_objects.Glass;
-import my_tetris.general_game_objects.Shape;
+import my_tetris.general_game_objects.AbstractShape;
 
 import java.util.ArrayList;
 
@@ -21,70 +21,47 @@ public class Game {
     
     private ShapeFactory shapeFactory;
     
-    private int score;
+    private int score = 0;
 
-    public boolean isInProgress () {
+    public boolean isInProgress() { return glass != null; }
 
-        return glass.getActiveShape() != null;
-    }
+    public Game() { shapeFactory = new ShapeFactory(); }
 
     public void start() {
         
         glass = new Glass(10, 20);
-        
         glass.addGlassListener(new GlassObserver());
-        glass.addHorizontalRowListener(new HorizontalRowObserver());
         
-        score = 0;
-        
-        shapeFactory = new ShapeFactory();
-        shapeFactory.addShapeFactoryListener(new ShapeFactoryObserver());
+        GameEvent evt = new GameEvent(this);
+        evt.setNewGlass(glass);
+        fireGlassWasSetup(evt);
 
-        glass.setShapeFactory(shapeFactory);
+        exchangeActiveShape();        
     }
     
-    private void changeScore(int delta) {
+    private void exchangeActiveShape() {
         
-        score += delta;
+        AbstractShape newShape = shapeFactory.createShape();
+
+        GameEvent evt = new GameEvent(this);
+        evt.setNewShape(newShape);
+        fireActiveShapeChanged(evt);
+
+        glass.setActiveShape(newShape);
     }
     
-    public void ShowScore() {
-        
-        System.out.print("\n***\nИгра закончилась\nВаш счет: " + score +  "\n***");
+    private void changeScore(int delta) { 
+    
+        score += delta;        
+        fireScoreChanged();
     }
+    
+    public void ShowScore() { System.out.print("\n***\nИгра закончилась\nВаш счет: " + score +  "\n***"); }
 
-    public int getScore() {
-        return score;
-    }
+    public int getScore() { return score; }
 
-    public boolean moveActiveShape(Direction d) {
-
-        if (glass.getActiveShape() == null) {
-
-            return false;
-        }
-
-        if (d != Direction.NORTH) {
-
-            glass.getActiveShape().move(d);
-        }
-
-        return true;
-    }
-
-    public boolean rotateActiveShape() {
-
-        if (glass.getActiveShape() == null) {
-
-            return false;
-        }
-
-        glass.getActiveShape().rotate();
-        return true;
-    }
-
-
-
+    public ShapeFactory getShapeFactory() { return shapeFactory; }
+    
     //Слушает ситуацию в стакане
     private class GlassObserver implements GlassListener {
 
@@ -94,98 +71,45 @@ public class Game {
         }
 
         @Override
-        public void glassContentChanged(GlassEvent e) {
-
-            GameEvent event = new GameEvent(this);
-            event.setGlassElements(e.getGlassElements());
-            Shape nextActiveShape = glass.getShapeFactory().getNextShape();
-            ArrayList<Element> NextActiveShapeElements = new ArrayList<>();
-            for (int i = 0; i < nextActiveShape.elementsCount(); i++) {
-
-                NextActiveShapeElements.add(nextActiveShape.getElement(i));
-            }
-            event.setNextActiveShape(NextActiveShapeElements);
-            fireGlassContentChanged(event);
-        }
-
-    }
-
-    //Получает следующую фигуру
-    private class ShapeFactoryObserver implements ShapeFactoryListener {
+        public void needNewActiveShape() { exchangeActiveShape(); }
 
         @Override
-        public void nextShapeChanged(GameEvent e) {
-
-            GameEvent event = new GameEvent(this);
-            Shape nextActiveShape = glass.getShapeFactory().getNextShape();
-            ArrayList<Element> NextActiveShapeElements = new ArrayList<>();
-            for (int i = 0; i < nextActiveShape.elementsCount(); i++) {
-
-                NextActiveShapeElements.add(nextActiveShape.getElement(i));
-            }
-            event.setNextActiveShape(NextActiveShapeElements);
-            fireNextShapeChanged(event);
-        }
-
-    }
-
-    //Получает очки от очищенного ряда
-    private class HorizontalRowObserver implements HorizontalRowListener {
+        public void shapeAbsorbed() { }
 
         @Override
-        public void HorizontalRowCleared(HorizontalRowEvent e) {
-            
-            changeScore(e.getScore());
-            fireScoreChanged();
-        }
-    }
+        public void rowCleared(GlassEvent e) { changeScore(e.getRemovedElementsCount()); }
 
+        @Override
+        public void glassContentChanged() { }
+    }
 
     //!!!Передает события UI
     private ArrayList<GameListener> listeners = new ArrayList<>();
 
     public void addGameListener(GameListener l) {
 
-        if (!listeners.contains(l)) {
-
-            listeners.add(l);
-        }
+        if (!listeners.contains(l)) { listeners.add(l); }
     }
 
-    public void removeGameListener(GameListener l) {
-
-        listeners.remove(l);
-    }
+    public void removeGameListener(GameListener l) { listeners.remove(l); }
 
     public void fireGameFinished() {
 
-        for (GameListener l: listeners) {
-
-            l.gameFinished();
-        }
+        for (GameListener l: listeners) { l.gameFinished(); }
     }
 
     public void fireScoreChanged() {
 
-        for (GameListener l: listeners) {
-
-            l.scoreChanged();
-        }
+        for (GameListener l: listeners) { l.scoreChanged(); }
     }
 
-    private void fireGlassContentChanged(GameEvent e) {
+    private void fireGlassWasSetup(GameEvent e) {
 
-        for (GameListener l: listeners) {
-
-            l.glassContentChanged(e);
-        }
+        for (GameListener l: listeners) { l.glassWasSetup(e); }
     }
 
-    private void fireNextShapeChanged(GameEvent e) {
+    private void fireActiveShapeChanged(GameEvent e) {
 
-        for (GameListener l: listeners) {
-
-            l.nextShapeChanged(e);
-        }
+        for (GameListener l: listeners) { l.activeShapeChanged(e); }
     }
 }
